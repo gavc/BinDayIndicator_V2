@@ -9,7 +9,7 @@
 
 Timezone Brisbane;
 
-const char appVersion[] = "20230703_2.0";
+const char appVersion[] = "20230711_2.0";
 
 // Bin day variables
 int binNight;// = 2; // 1 - Sunday, 2 - Monday, 3 - Tuesday...
@@ -109,25 +109,24 @@ void loop() {
   
   Serial.println("-------------------------");
 
- // Get the current time
-  unsigned short currentHour = Brisbane.hour();
-  //unsigned short currentWeekday = Brisbane.weekday();
+// Get the current time
+unsigned short currentHour = Brisbane.hour();
 
-  if (Brisbane.weekday() == binNight && currentHour >= startHour && currentHour < endHour) {
+if (Brisbane.weekday() == binNight && currentHour >= startHour && currentHour < endHour) {
     // Call your function here
     checkBinWeek();
-  }
 
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    
-    colorSwitch = !colorSwitch;
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
 
-    // Update the LED color
-    updateLedColor();
-  } else if (Brisbane.weekday() != binNight || currentHour < startHour || currentHour >= endHour) {
+        colorSwitch = !colorSwitch;
+
+        // Update the LED color
+        updateLedColor();
+    }
+} else if (Brisbane.weekday() != binNight || currentHour < startHour || currentHour >= endHour) {
     setLedColor(0, 0, 0); // Turn off LED
-  }
+}
 
   delay(1000);
 }
@@ -279,5 +278,5 @@ void handleSet() {
 
   EEPROM.commit();  // Ensure changes are written
   
-  server.send(200, "text/html", "Values set successfully. <a href=\"/\">Go Back</a>");
+  server.send(200, "text/html", "Values set successfully. Please reset the Wemos to continue. <a href=\"/\">Go Back</a>");
 }
