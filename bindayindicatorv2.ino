@@ -9,11 +9,12 @@
 
 Timezone Brisbane;
 
-const char appVersion[] = "20230711_2.0";
+const char appVersion[] = "20230712_2.2";
 
 // Bin day variables
 int binNight;// = 2; // 1 - Sunday, 2 - Monday, 3 - Tuesday...
-int referenceGreenWeek = 23; // Reference week for Green Bin, used to calc odd/even weeks.
+int referenceGreenWeek; //= 23; // Reference week for Green Bin, used to calc odd/even weeks.
+int binColor = 1; // 1 = Green, 2 = Yellow - Used to work out the value for the reference week - used on the web form.
 
 // Hours to blink the LED between
 int startHour;// = 16; // Start blinking a 4p
@@ -53,6 +54,7 @@ void setup() {
   //EEPROM.write(1, 16);
   //EEPROM.write(2, 22);
   //EEPROM.write(3, 20);
+  //EEPROM.write(4, 23);
   //EEPROM.commit();  // Ensure changes are written
 
   // After setting the initial values, remove or comment out the above lines 
@@ -62,6 +64,7 @@ void setup() {
   startHour = EEPROM.read(1);
   endHour = EEPROM.read(2);
   ledBrightness = EEPROM.read(3);
+  referenceGreenWeek = EEPROM.read(4);
 
   // LED Activities  
   setLedColor(0, 0, 0); // Turn off the LED
@@ -248,12 +251,20 @@ html += "\" oninput=\"endValue.innerText = this.value\">\
                         <option value=\"20\">Low</option>\
                         <option value=\"130\">Medium</option>\
                         <option value=\"200\">High</option>\
+                    </select>\
+                      <br>\
+                      <br>\
+                      <label for=\"binColor\">Reference Week (Value only needs to be set once, set it to what color bin should be out this week):</label>\
+                      <select id=\"binColor\" name=\"binColor\">\
+                       <option selected disabled value=\"\">Please Choose</option>\
+                        <option value=\"1\">Green Week</option>\
+                        <option value=\"2\">Yellow Week</option>\
                       </select>\
                       <br>\
                       <br>\
                       <input type=\"submit\" value=\"Submit\">\
                     </form>\
-                  </body>\
+                    </body>\
                 </html>";
   server.send(200, "text/html", html);
 }
@@ -273,10 +284,19 @@ void handleSet() {
   }
     if (server.arg("stripbrightness") != "") {
     ledBrightness = server.arg("stripbrightness").toInt();
-    EEPROM.write(3, ledBrightness);  // Write to EEPROM at address 2
+    EEPROM.write(3, ledBrightness);  // Write to EEPROM at address 3
   }
+    if (server.arg("binColor") != "") {
+    binColor = server.arg("binColor").toInt();
+    if(binColor == 1){
+      referenceGreenWeek = Brisbane.weekISO();
+    } else {
+      referenceGreenWeek = Brisbane.weekISO() - 1;
+  }
+  EEPROM.write(4, referenceGreenWeek);  // Write to EEPROM at address 4
+}
 
   EEPROM.commit();  // Ensure changes are written
   
-  server.send(200, "text/html", "Values set successfully. Please reset the Wemos to continue. <a href=\"/\">Go Back</a>");
+  server.send(200, "text/html", "Values set successfully. Please power off and on again to continue. <a href=\"/\">Go Back</a>");
 }
